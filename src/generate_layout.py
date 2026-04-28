@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
-from pdkmaster import design as _dsgn
 from pdkmaster.io.klayout import export2db
 
 from c4m.pdk import sky130
@@ -12,19 +11,141 @@ pya: Any
 
 from top import Top
 
+
+sp = pya.ShapeProcessor()
+ep = pya.EdgeProcessor()
+
+OR = pya.EdgeProcessor.ModeOr
+AND = pya.EdgeProcessor.ModeAnd
+NOT = pya.EdgeProcessor.ModeANotB
+
 lib = sky130.Library(name="TTSKY_SRAM")
 fab = sky130.CellFactory(lib=lib)
 top = Top(fab=fab)
 lib.cells += top
 
-
-kltech = pya.Technology.technology_by_name("C4M.IHPSG13G2")
+kltech = pya.Technology()
 klsaveopt = kltech.save_layout_options.dup()
 klsaveopt.write_context_info = False
 
 kldb = export2db(
     lib, gds_layers=sky130.gds_layers,
     add_pin_label=True,
+    merge=True,
 )
+
+# Get the layer numbers
+
+idx_nwell = kldb.layer(64, 20)
+idx_diff = kldb.layer(65, 20)
+idx_tap = kldb.layer(65, 44)
+idx_nsdm = kldb.layer(93, 44)
+idx_psdm = kldb.layer(94, 20)
+idx_poly = kldb.layer(66, 20)
+idx_licon = kldb.layer(66, 44)
+idx_npc = kldb.layer(95, 20)
+idx_error = kldb.layer(66, 25)
+
+w_ch = 0.17
+minw_impl = 0.38
+mins_impl = 0.38
+minenc_diff_impl = 0.125
+mins_polylicon_psdm = 0.11
+minw_npc = 0.27
+minenc = 0.1
+mins_npc = 0.27
+
+for cell in kldb.each_cell():
+    #
+    ## Split difftap
+    #
+    r_nwell = pya.Region(cell.shapes(idx_nwell))
+    r_diff = pya.Region(cell.shapes(idx_diff))
+    r_nsdm = pya.Region(cell.shapes(idx_nsdm))
+    r_psdm = pya.Region(cell.shapes(idx_psdm))
+
+    # Generate tap and remove from diff
+    r_tap = (r_diff & r_nwell & r_nsdm) + ((r_diff - r_nwell) & r_psdm)
+    r_diff = r_diff - r_tap
+
+    cell.shapes(idx_tap).insert(r_tap)
+    s = cell.shapes(idx_diff)
+    s.clear()
+    s.insert(r_diff)
+
+    #
+    ## Generate npc layer
+    ## min_width: 
+    #
+    r_poly = pya.Region(cell.shapes(idx_poly))
+    r_licon = pya.Region(cell.shapes(idx_licon))
+    size = max(0.5*(minw_npc - w_ch), minenc)
+    over_size = 0.5*mins_npc
+
+    r = r_licon & r_poly
+    r.size(1000*size)
+
+    # Fill space smaller then minimum space
+    r.size(1000*over_size).merge().size(-1000*over_size)
+
+    # Remove lines smaller than minimum width
+    r.size(-1000*0.5*minw_npc).size(1000*0.5*minw_npc)
+
+    # Add shapes to fix remaining minimum space violations
+    # eps = r.space_check(1000*mins_npc, False, pya.Metrics.Square)
+    eps = r.space_check(1000*mins_npc)
+    r2 = pya.Region()
+    for edgepair in eps:
+        r2.insert(edgepair.bbox())
+    r += r2.size(1000*0.5*minw_npc)
+
+    # Be sure no remaining minimum space violations are remaining
+    r.size(1000*over_size).merge().size(-1000*over_size)
+
+    cell.shapes(idx_npc).insert(r)
+
+    #
+    ## Remove psdm too close to or covering poly licon
+    #
+    r_diff = pya.Region(cell.shapes(idx_diff))
+    r_psdm = pya.Region(cell.shapes(idx_psdm))
+    r_nsdm = pya.Region(cell.shapes(idx_nsdm))
+    r_licon = pya.Region(cell.shapes(idx_licon))
+    r_poly = pya.Region(cell.shapes(idx_poly))
+
+    # Don't remove psdm needed for diff enclosure
+    r_keep = r_diff.sized(1000*minenc_diff_impl)
+
+    # Select licon with distance from psdm smaller or equal minimum
+    r_polylicon = r_licon & r_poly
+    r_close = r_polylicon.interacting(r_psdm.sized(1000*mins_polylicon_psdm - 1))
+
+    # Size big enough so it meets min. area even after trimmed by r_keep
+    r_remove = r_close.sized(1000*0.40) - r_keep
+
+    # Remove slivers and fill min space violations
+    size_sliver = 1000*0.5*minw_impl - 1
+    size_fill = 1000*0.5*mins_impl - 1
+    r_remove.size(-size_sliver).size(size_sliver + size_fill).size(-size_fill)
+
+    # Remove with min space distance
+    r_psdm -= r_remove
+
+    # Remove slivers on psdm
+    r_psdm.size(-size_sliver).size(size_sliver)
+
+    s_psdm = cell.shapes(idx_psdm)
+    s_psdm.clear()
+    s_psdm.insert(r_psdm)
+
+# Fix npc min. space on top level
+cell = kldb.cell(top.name)
+
+s_npc_all = pya.Shapes()
+sp.size(kldb, cell, idx_npc, s_npc_all, 0.0, 0.0, OR, True, True, True)
+s_npc = cell.shapes(idx_npc)
+eps = pya.Region(s_npc_all).space_check(1000*mins_npc, False, pya.Metrics.Square)
+for edgepair in eps:
+    s_npc.insert(edgepair.bbox())
 
 kldb.write(f"gds/{top.name}.gds")

@@ -22,7 +22,7 @@ jobs:
       - name: Generate output file
         run: |
           uv sync
-          mkdir gds
+          mkdir gds verilog
           uv run src/generate_layout.py
           # TODO: generate LEF file
 
