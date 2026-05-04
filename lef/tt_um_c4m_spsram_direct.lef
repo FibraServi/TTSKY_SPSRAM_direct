@@ -279,5 +279,15 @@ MACRO tt_um_c4m_spsram_direct
         RECT 80.700 2.000 91.700 109.520 ;
     END
   END VDPWR
+  OBS
+    LAYER met1 ;
+      RECT 0.000 0.000 161.000 111.520 ;
+    LAYER met2 ;
+      RECT 0.000 0.000 161.000 111.520 ;
+    LAYER met3 ;
+      RECT 0.000 0.000 161.000 111.520 ;
+    LAYER met4 ;
+      RECT 0.000 0.000 161.000 111.520 ;
+  END
 END tt_um_c4m_spsram_direct
 END LIBRARY
