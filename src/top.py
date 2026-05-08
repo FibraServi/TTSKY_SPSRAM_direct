@@ -23,7 +23,7 @@ class Top(TTTemplate1X1):
         ckt = self.circuit
         nets = ckt.nets
 
-        memfab = sky130.SPSRAMFactory(thin_layout=False, lib=self.fab.lib)
+        memfab = sky130.SPSRAMFactory(lib=self.fab.lib)
         mem_cell = memfab.block(words=128, word_size=8, we_size=1, cell_name="SRAM128x8")
 
         mem = ckt.instantiate(mem_cell, name="mem")
@@ -81,7 +81,7 @@ class Top(TTTemplate1X1):
 
         mem_d.rotate(rotation=_geo.Rotation.MY90)
         mem_d.align(
-            _dsgn.C2LFixLeft(prim=None, value=10.0),
+            _dsgn.C2LFixLeft(prim=None, value=30.0),
             _dsgn.C2LFixBottom(prim=None, value=2.0),
         )
 
@@ -230,13 +230,13 @@ class Top(TTTemplate1X1):
 
         left = mem_d.left
         right = left + w
-        vddm4pin_shape = _geo.Rect(left=left, bottom=bottom, right=right, top=top)
-        c2l.new_wire(net=vdd, wire=m4, pin=True, shape=vddm4pin_shape)
+        vssm4pin_shape = _geo.Rect(left=left, bottom=bottom, right=right, top=top)
+        vssm4pin_d = c2l.new_wire(net=vss, wire=m4, pin=True, shape=vssm4pin_shape)
 
         left = right + s
         right = left + w
-        vssm4pin_shape = _geo.Rect(left=left, bottom=bottom, right=right, top=top)
-        vssm4pin_d = c2l.new_wire(net=vss, wire=m4, pin=True, shape=vssm4pin_shape)
+        vddm4pin_shape = _geo.Rect(left=left, bottom=bottom, right=right, top=top)
+        c2l.new_wire(net=vdd, wire=m4, pin=True, shape=vddm4pin_shape)
 
         lrs = set(
             _geo.leftright(left=shape.bounds.left, right=shape.bounds.right)
