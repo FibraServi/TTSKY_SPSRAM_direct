@@ -1,6 +1,6 @@
 ## How it works
 
-This design contains a single port SRAM block with pins connected directly to TT tile pins. This allows to use this design directly as a SRAM block.
+This design contains a single port SRAM block with pins connected directly to TT tile pins. This allows to use this design directly as a SRAM block. This is version with legacy layout bit cell contrary to `tt_um_c4m_spsram_direct` which has a thin cell layout. This is here for mostly historical reasons as this cell is much bigger than the thin cell version.
 
 The included block has 128 words of 8 bits. These are the pins for the block:
 

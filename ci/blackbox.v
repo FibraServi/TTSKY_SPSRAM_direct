@@ -4,7 +4,7 @@
 
 `default_nettype none
 
-module tt_um_c4m_spsram_direct (
+module tt_um_c4m_legacyspsram_direct (
     input  wire       VGND,
     input  wire       VDPWR,    // 1.8v power supply
     input  wire [7:0] ui_in,    // Dedicated inputs

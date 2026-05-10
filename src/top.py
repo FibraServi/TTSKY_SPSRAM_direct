@@ -11,7 +11,7 @@ prims = sky130.tech.primitives
 from template import TTTemplate1X1
 
 
-name = "tt_um_c4m_spsram_direct"
+name = "tt_um_c4m_legacyspsram_direct"
 
 class Top(TTTemplate1X1):
     def __init__(self, *, fab: _dsgn.CellFactory):

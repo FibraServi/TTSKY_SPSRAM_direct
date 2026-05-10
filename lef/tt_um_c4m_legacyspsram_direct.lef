@@ -2,9 +2,9 @@ VERSION 5.7 ;
   NOWIREEXTENSIONATPIN ON ;
   DIVIDERCHAR "/" ;
   BUSBITCHARS "[]" ;
-MACRO tt_um_c4m_spsram_direct
+MACRO tt_um_c4m_legacyspsram_direct
   CLASS BLOCK ;
-  FOREIGN tt_um_c4m_spsram_direct ;
+  FOREIGN tt_um_c4m_legacyspsram_direct ;
   ORIGIN 0.000 0.000 ;
   SIZE 161.000 BY 111.520 ;
   PIN ena

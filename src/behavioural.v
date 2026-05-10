@@ -22,7 +22,7 @@ module SP6TSRAM128x8(a, d, we, clk, q);
   assign q = mem[a_latch];
 endmodule
 
-module tt_um_c4m_spsram_direct (
+module tt_um_c4m_legacyspsram_direct (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
