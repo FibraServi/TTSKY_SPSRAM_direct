@@ -34,6 +34,11 @@ kldb = export2db(
     merge=True,
 )
 
+def get_hier(cell, layer_idx):
+    s = pya.Shapes()
+    sp.merge(kldb, cell, layer_idx, s, True, 0, True, True)
+    return pya.Region(s)
+
 # Get the layer numbers
 
 idx_nwell = kldb.layer(64, 20)
@@ -106,19 +111,20 @@ for cell in kldb.each_cell():
 
     #
     ## Remove psdm too close to or covering poly licon
+    ## Use hierarchical poly licon, diff and psdm
     #
-    r_diff = pya.Region(cell.shapes(idx_diff))
+    r_diff_hier = get_hier(cell, idx_diff)
     r_psdm = pya.Region(cell.shapes(idx_psdm))
-    r_nsdm = pya.Region(cell.shapes(idx_nsdm))
-    r_licon = pya.Region(cell.shapes(idx_licon))
-    r_poly = pya.Region(cell.shapes(idx_poly))
+    r_psdm_hier = get_hier(cell, idx_psdm)
+    r_licon_hier = get_hier(cell, idx_licon)
+    r_poly_hier = get_hier(cell, idx_poly)
 
     # Don't remove psdm needed for diff enclosure
-    r_keep = r_diff.sized(1000*minenc_diff_impl)
+    r_keep = r_diff_hier.sized(1000*minenc_diff_impl)
 
     # Select licon with distance from psdm smaller or equal minimum
-    r_polylicon = r_licon & r_poly
-    r_close = r_polylicon.interacting(r_psdm.sized(1000*mins_polylicon_psdm - 1))
+    r_polylicon_hier = r_licon_hier & r_poly_hier
+    r_close = r_polylicon_hier.interacting(r_psdm.sized(1000*mins_polylicon_psdm - 1))
 
     # Size big enough so it meets min. area even after trimmed by r_keep
     r_remove = r_close.sized(1000*0.40) - r_keep
@@ -127,16 +133,19 @@ for cell in kldb.each_cell():
     size_sliver = 1000*0.5*minw_impl - 1
     size_fill = 1000*0.5*mins_impl - 1
     r_remove.size(-size_sliver).size(size_sliver + size_fill).size(-size_fill)
+    r_psdm_hier_trimmed = r_psdm_hier - r_remove
 
-    # Remove with min space distance
-    r_psdm -= r_remove
+    # Remove slivers on trimmed psdm
+    # We do this on hierarchical psdm to account for slivers abuted to psdm
+    # in lower hierarchy
+    r_psdm_hier_trimmed.size(-size_sliver).size(size_sliver)
 
-    # Remove slivers on psdm
-    r_psdm.size(-size_sliver).size(size_sliver)
+    # The actual removed area from the hierarchical.
+    r_removed = r_psdm_hier - r_psdm_hier_trimmed
 
     s_psdm = cell.shapes(idx_psdm)
     s_psdm.clear()
-    s_psdm.insert(r_psdm)
+    s_psdm.insert(r_psdm - r_removed)
 
 # Fix npc min. space on top level
 cell = kldb.cell(top.name)
