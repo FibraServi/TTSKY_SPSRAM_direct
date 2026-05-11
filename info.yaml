@@ -1,6 +1,6 @@
 # Tiny Tapeout project information
 project:
-  title:        "TTSKY-SPSRAM-direct"      # Project title
+  title:        "TTSKY-SPSRAM-legacy-direct"      # Project title
   author:       "Staf Verhaegen"
   discord:      "Chips4Makers"
   description:  "Sky130 single port SRAM with pins connected directly to TT tile pins and legacy layout bit cell."
