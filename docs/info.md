@@ -1,6 +1,6 @@
 ## How it works
 
-This design contains a single port SRAM block with pins connected directly to TT tile pins. This allows to use this design directly as a SRAM block.
+This design contains a single port SRAM block with pins connected directly to TT tile pins. This allows to use this design directly as a SRAM block. This design contains the same SRAM block as on on TTSKY-SPSRAM-direct but the connection to the tile pins is done with librelane and not with a custom python script. This was done with help from Leo Moser.
 
 The included block has 128 words of 8 bits. These are the pins for the block:
 

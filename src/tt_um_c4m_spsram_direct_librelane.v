@@ -8,21 +8,9 @@ module SP6TSRAM128x8(a, d, we, clk, q);
   input wire [0:0] we;
   input wire clk;
   output wire [7:0] q;
-
-  reg [7:0] mem [0:127];
-  reg [6:0] a_latch;
-
-  always @(posedge clk) begin
-    a_latch <= a;
-    if (we[0]) begin
-      mem[a_latch][7:0] <= d[7:0];
-    end
-  end
-
-  assign q = mem[a_latch];
 endmodule
 
-module tt_um_c4m_spsram_direct (
+module tt_um_c4m_spsram_direct_librelane (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
