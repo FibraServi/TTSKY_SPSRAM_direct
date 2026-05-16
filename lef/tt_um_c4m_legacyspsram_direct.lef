@@ -289,5 +289,5 @@ MACRO tt_um_c4m_legacyspsram_direct
     LAYER met4 ;
       RECT 0.000 0.000 161.000 111.520 ;
   END
-END tt_um_c4m_spsram_direct
+END tt_um_c4m_legacyspsram_direct
 END LIBRARY
